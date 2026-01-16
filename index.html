@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>İşçi ve İhale Yönetim Pro v3</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    body { background-color: #eef2f6; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding-bottom: 80px; }
+    
+    /* Kart ve Panel Tasarımları */
+    .header-panel { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 20px 15px; border-radius: 0 0 25px 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    .card-custom { border: none; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 15px; background: white; overflow: hidden; }
+    
+    /* İstatistik Kartları */
+    .stat-box { padding: 15px; border-radius: 12px; color: white; text-align: center; position: relative; overflow: hidden; }
+    .stat-box h3 { font-size: 18px; font-weight: bold; margin: 5px 0; }
+    .stat-box small { opacity: 0.9; font-size: 11px; }
+    .bg-gelir { background: linear-gradient(45deg, #11998e, #38ef7d); }
+    .bg-gider { background: linear-gradient(45deg, #cb2d3e, #ef473a); }
+    .bg-kar { background: linear-gradient(45deg, #f7971e, #ffd200); color: #333; }
+
+    /* Alt Menü */
+    .nav-bottom { position: fixed; bottom: 0; width: 100%; background: white; box-shadow: 0 -5px 20px rgba(0,0,0,0.05); z-index: 1000; display: flex; height: 65px; border-top: 1px solid #eee; }
+    .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: #999; cursor: pointer; transition: all 0.2s; }
+    .nav-item i { font-size: 22px; margin-bottom: 4px; }
+    .nav-item.active { color: #1e3c72; font-weight: 700; transform: translateY(-2px); }
+    .nav-item.active i { color: #2a5298; }
+
+    /* Sayfa Geçişleri */
+    .page-section { display: none; animation: slideUp 0.3s ease-out; }
+    .page-section.active { display: block; }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Tablo ve Listeler */
+    table th { font-size: 11px; background-color: #f8f9fa !important; text-transform: uppercase; color: #666; }
+    table td { vertical-align: middle; font-size: 13px; }
+    .btn-extra { font-size: 12px; border-style: dashed; }
+    .tender-item { border-left: 4px solid #1e3c72; transition: 0.2s; }
+    .tender-item:hover { background-color: #f8f9fa; }
+</style>
+</head>
+<body>
+
+<div class="header-panel text-center">
+    <h5 class="mb-0"><i class="fas fa-project-diagram me-2"></i>Şantiye Yöneticisi</h5>
+    <small style="opacity:0.8">Hakediş & Maliyet Kontrol</small>
+</div>
+
+<div class="container mt-3">
+
+    <div id="page-home" class="page-section active">
+        <div class="row g-2 mb-3">
+            <div class="col-4">
+                <div class="stat-box bg-gelir">
+                    <small>TOPLAM GELİR</small>
+                    <h3 id="lblIncome">0</h3>
+                    <small>(Hakediş)</small>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="stat-box bg-gider">
+                    <small>TOPLAM GİDER</small>
+                    <h3 id="lblExpense">0</h3>
+                    <small>(Maaşlar)</small>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="stat-box bg-kar">
+                    <small>NET KÂR</small>
+                    <h3 id="lblProfit">0</h3>
+                    <small>(Kasa)</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-custom p-3">
+            <h6 class="text-primary"><i class="fas fa-info-circle me-2"></i>Durum Özeti</h6>
+            <p class="text-muted small mb-0">
+                Yukarıdaki rakamlar; hem <strong>onaylanmış ihalelerden</strong> gelen toplu paraları, 
+                hem de <strong>maaş takip</strong> ekranında işlediğin günlük verileri kapsar.
+            </p>
+        </div>
+    </div>
+
+    <div id="page-track" class="page-section">
+        <div class="card-custom p-3">
+            <div class="row g-2">
+                <div class="col-7">
+                    <label class="small fw-bold text-muted">Personel Seç</label>
+                    <select id="selWorker" class="form-select form-select-sm" onchange="renderTable()"></select>
+                </div>
+                <div class="col-5">
+                    <label class="small fw-bold text-muted">Dönem</label>
+                    <input type="month" id="selMonth" class="form-control form-control-sm" onchange="renderTable()">
+                </div>
+            </div>
+        </div>
+
+        <div class="card-custom p-0 overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm text-center mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width:15%">Gün</th>
+                            <th style="width:20%">Saat</th>
+                            <th>Ödenecek<br>(Net)</th>
+                            <th>Kazanılan<br>(Brüt)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tblBody"></tbody>
+                    <tfoot class="bg-light fw-bold">
+                        <tr>
+                            <td>TOP</td>
+                            <td id="footHour">0</td>
+                            <td class="text-danger" id="footNet">0</td>
+                            <td class="text-success" id="footGross">0</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div class="p-2 d-grid">
+                <button class="btn btn-outline-secondary btn-sm btn-extra" onclick="addExtraDay()">
+                    <i class="fas fa-plus-circle me-1"></i>Ekstra Gün Ekle (32, 33...)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-tender" class="page-section">
+        <div class="card-custom p-3">
+            <h6 class="text-primary mb-3"><i class="fas fa-calculator me-2"></i>Yeni İhale Hesabı</h6>
+            
+            <div class="mb-2">
+                <label class="small text-muted">İhale / İş Adı</label>
+                <input id="tName" class="form-control form-control-sm" placeholder="Örn: X Blok Boya İşi">
+            </div>
+            <div class="mb-2">
+                <label class="small text-muted">Toplam Gün Sayısı</label>
+                <input id="tDays" type="number" class="form-control form-control-sm" placeholder="10">
+            </div>
+            
+            <label class="small text-muted mt-2">Çalışacak Ekip:</label>
+            <div id="tenderWorkerList" class="border rounded p-2 bg-light mb-3" style="max-height:120px; overflow-y:auto">
+                </div>
+
+            <button class="btn btn-primary w-100 btn-sm" onclick="calculateTender()">
+                <i class="fas fa-cog me-1"></i>Maliyet Hesapla
+            </button>
+            
+            <div id="tenderResult" class="mt-3 p-3 border border-warning rounded bg-warning-subtle d-none">
+                <div class="row text-center mb-2">
+                    <div class="col-4">
+                        <small class="d-block text-muted">Gider (İşçi)</small>
+                        <span class="fw-bold text-danger" id="resCost">0</span>
+                    </div>
+                    <div class="col-4">
+                        <small class="d-block text-muted">Gelir (Ciro)</small>
+                        <span class="fw-bold text-success" id="resIncome">0</span>
+                    </div>
+                    <div class="col-4">
+                        <small class="d-block text-muted">Net Kâr</small>
+                        <span class="fw-bold text-dark" id="resProfit">0</span>
+                    </div>
+                </div>
+                <button class="btn btn-success w-100 btn-sm shadow-sm" onclick="saveTender()">
+                    <i class="fas fa-save me-1"></i>İhaleyi Onayla ve Kaydet
+                </button>
+                <div class="text-center mt-1"><small style="font-size:10px" class="text-muted">Kaydedince genel duruma eklenir.</small></div>
+            </div>
+        </div>
+
+        <div class="card-custom p-3">
+            <h6 class="mb-3">Kayıtlı İhaleler</h6>
+            <div id="savedTendersList">
+                <div class="text-center text-muted small p-2">Henüz kayıtlı ihale yok.</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-workers" class="page-section">
+        <div class="card-custom p-3">
+            <h6 class="text-primary">Personel Ekle</h6>
+            <div class="mb-2">
+                <label class="small text-muted">Ad Soyad</label>
+                <input id="wName" class="form-control form-control-sm">
+            </div>
+            <div class="row g-2">
+                <div class="col-6">
+                    <label class="small fw-bold text-success">Brüt (Müşteriden)</label>
+                    <input id="wGross" type="number" class="form-control form-control-sm" placeholder="5000">
+                    <small style="font-size:9px" class="text-muted">Günlük Hakediş</small>
+                </div>
+                <div class="col-6">
+                    <label class="small fw-bold text-danger">Net (İşçiye)</label>
+                    <input id="wNet" type="number" class="form-control form-control-sm" placeholder="2500">
+                    <small style="font-size:9px" class="text-muted">Günlük Yevmiye</small>
+                </div>
+            </div>
+            <button class="btn btn-dark w-100 btn-sm mt-3" onclick="addWorker()">Kaydet</button>
+        </div>
+
+        <div class="card-custom p-3">
+            <h6>Personel Listesi</h6>
+            <ul class="list-group list-group-flush small" id="workerListUL"></ul>
+        </div>
+    </div>
+
+</div>
+
+<div class="nav-bottom">
+    <div class="nav-item active" onclick="navTo('home', this)">
+        <i class="fas fa-chart-pie"></i>
+        <span>Durum</span>
+    </div>
+    <div class="nav-item" onclick="navTo('track', this)">
+        <i class="fas fa-calendar-alt"></i>
+        <span>Takip</span>
+    </div>
+    <div class="nav-item" onclick="navTo('tender', this)">
+        <i class="fas fa-file-contract"></i>
+        <span>İhale</span>
+    </div>
+    <div class="nav-item" onclick="navTo('workers', this)">
+        <i class="fas fa-users"></i>
+        <span>İşçiler</span>
+    </div>
+</div>
+
+<script>
+const DB_KEY = "santiye_pro_v3";
+
+// Veri Yapısı
+let data = {
+    workers: [],    // {id, name, gross, net}
+    logs: {},       // { "workerID_YYYY-MM-DD" : hours, "workerID_YYYY-MM-Ex1" : hours }
+    tenders: []     // {id, name, totalCost, totalIncome, profit, date}
+};
+
+// --- BAŞLANGIÇ & KAYIT ---
+function loadData() {
+    let stored = localStorage.getItem(DB_KEY);
+    if(stored) data = JSON.parse(stored);
+    
+    // Varsayılan Ay (Bugün)
+    let now = new Date();
+    document.getElementById('selMonth').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    
+    updateAllUI();
+}
+
+function saveData() {
+    localStorage.setItem(DB_KEY, JSON.stringify(data));
+    updateAllUI(); // Her kayıtta her şeyi güncelle
+}
+
+function updateAllUI() {
+    renderDashboard();
+    renderWorkerSelect();
+    renderWorkerList();
+    renderTenderWorkers();
+    renderSavedTenders();
+    renderTable(); 
+}
+
+// --- NAVİGASYON ---
+function navTo(pageId, btn) {
+    document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + pageId).classList.add('active');
+    
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+}
+
+// --- 1. DASHBOARD & GENEL HESAP ---
+function renderDashboard() {
+    // A) Kayıtlı İhalelerden Gelenler
+    let tenderIncome = data.tenders.reduce((acc, t) => acc + t.totalIncome, 0);
+    let tenderExpense = data.tenders.reduce((acc, t) => acc + t.totalCost, 0);
+
+    // B) Puantaj (Takip) Tablosundan Gelenler
+    // (Not: Kullanıcı hem ihaleye hem puantaja yazıyorsa mükerrer olabilir,
+    // ancak kullanıcı isteği üzerine "Kaydet dersem ekle" mantığıyla ihaleleri kesin gelir kabul ediyoruz.
+    // Puantajı da "Anlık extra işler" gibi topluyoruz veya ikisini ayrı görmek isteyebilirsin.
+    // Şimdilik ikisini topluyoruz.)
+    
+    let trackIncome = 0;
+    let trackExpense = 0;
+
+    Object.keys(data.logs).forEach(key => {
+        let [wId, datePart] = key.split('_');
+        let h = data.logs[key];
+        let w = data.workers.find(x => x.id == wId);
+        if(w && h > 0) {
+            let dayRatio = h / 8; // 8 saat 1 gün
+            trackExpense += w.net * dayRatio;
+            trackIncome += w.gross * dayRatio;
+        }
+    });
+
+    // Toplamlar
+    let totalIncome = tenderIncome + trackIncome;
+    let totalExpense = tenderExpense + trackExpense;
+    let totalProfit = totalIncome - totalExpense;
+
+    document.getElementById('lblIncome').innerText = totalIncome.toLocaleString('tr-TR') + " TL";
+    document.getElementById('lblExpense').innerText = totalExpense.toLocaleString('tr-TR') + " TL";
+    document.getElementById('lblProfit').innerText = totalProfit.toLocaleString('tr-TR') + " TL";
+}
+
+// --- 2. İŞÇİ YÖNETİMİ ---
+function addWorker() {
+    let name = document.getElementById('wName').value;
+    let gross = parseFloat(document.getElementById('wGross').value); // Brüt
+    let net = parseFloat(document.getElementById('wNet').value);     // Net
+
+    if(!name || isNaN(gross) || isNaN(net)) return alert("Eksik bilgi!");
+
+    data.workers.push({ id: Date.now(), name, gross, net });
+    document.getElementById('wName').value = "";
+    document.getElementById('wGross').value = "";
+    document.getElementById('wNet').value = "";
+    saveData();
+    alert("Personel eklendi!");
+}
+
+function renderWorkerList() {
+    document.getElementById('workerListUL').innerHTML = data.workers.map(w => `
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span>${w.name}</span>
+            <div class="text-end">
+                <span class="badge bg-success" title="Brüt">${w.gross}</span>
+                <span class="badge bg-danger" title="Net">${w.net}</span>
+                <i class="fas fa-trash text-muted ms-2" onclick="deleteWorker(${w.id})" style="cursor:pointer"></i>
+            </div>
+        </li>
+    `).join('');
+}
+
+function deleteWorker(id) {
+    if(confirm("Silmek istediğine emin misin?")) {
+        data.workers = data.workers.filter(w => w.id !== id);
+        saveData();
+    }
+}
+
+// --- 3. TAKİP (PUANTAJ) ---
+function renderWorkerSelect() {
+    let sel = document.getElementById('selWorker');
+    let old = sel.value;
+    sel.innerHTML = data.workers.map(w => `<option value="${w.id}">${w.name}</option>`).join('');
+    if(old) sel.value = old;
+}
+
+function renderTable() {
+    let wId = document.getElementById('selWorker').value;
+    let mVal = document.getElementById('selMonth').value;
+    if(!wId || !mVal) return;
+
+    let w = data.workers.find(x => x.id == wId);
+    let [year, month] = mVal.split('-');
+    let daysInMonth = new Date(year, month, 0).getDate();
+    
+    let tbody = document.getElementById('tblBody');
+    tbody.innerHTML = "";
+
+    let tH = 0, tNet = 0, tGross = 0;
+
+    // A. Normal Günler (1-31)
+    for(let d=1; d<=daysInMonth; d++) {
+        let dateKey = `${year}-${month}-${String(d).padStart(2,'0')}`;
+        let rowHtml = createRowHtml(w, wId, dateKey, d);
+        tbody.innerHTML += rowHtml.html;
+        tH += rowHtml.h; tNet += rowHtml.n; tGross += rowHtml.g;
+    }
+
+    // B. Ekstra Günler (Örn: wId_2024-01-Ex1)
+    // Sadece bu aya ve bu işçiye ait ekstra kayıtları bulalım
+    let extraKeys = Object.keys(data.logs).filter(k => k.startsWith(`${wId}_${year}-${month}-Ex`));
+    extraKeys.sort(); // Sırayla gelsin
+
+    extraKeys.forEach((fullKey, index) => {
+        let dateKey = fullKey.split('_')[1]; // 2024-01-Ex1 kısmını al
+        let label = `Ekstra ${index + 1}`;
+        let rowHtml = createRowHtml(w, wId, dateKey, label);
+        tbody.innerHTML += rowHtml.html;
+        tH += rowHtml.h; tNet += rowHtml.n; tGross += rowHtml.g;
+    });
+
+    document.getElementById('footHour').innerText = tH;
+    document.getElementById('footNet').innerText = tNet.toLocaleString() + " TL";
+    document.getElementById('footGross').innerText = tGross.toLocaleString() + " TL";
+}
+
+function createRowHtml(worker, wId, dateKey, label) {
+    let key = `${wId}_${dateKey}`;
+    let h = data.logs[key] || 0;
+    
+    let ratio = h / 8;
+    let valNet = worker.net * ratio;
+    let valGross = worker.gross * ratio;
+
+    let bgClass = h > 0 ? 'bg-success-subtle' : '';
+
+    return {
+        h: h, n: valNet, g: valGross,
+        html: `
+        <tr class="${bgClass}">
+            <td>${label}</td>
+            <td>
+                <input type="number" step="0.5" class="form-control form-control-sm text-center p-0"
+                value="${h > 0 ? h : ''}" placeholder="-" 
+                onchange="saveLog('${key}', this.value)">
+            </td>
+            <td>${valNet > 0 ? valNet.toFixed(0) : '-'}</td>
+            <td>${valGross > 0 ? valGross.toFixed(0) : '-'}</td>
+        </tr>`
+    };
+}
+
+function saveLog(key, val) {
+    let h = parseFloat(val);
+    if(isNaN(h) || h < 0) h = 0;
+    
+    if(h === 0) delete data.logs[key];
+    else data.logs[key] = h;
+    
+    saveData();
+}
+
+function addExtraDay() {
+    let wId = document.getElementById('selWorker').value;
+    let mVal = document.getElementById('selMonth').value;
+    if(!wId) return alert("İşçi seçin");
+    
+    // Rastgele benzersiz bir ID oluşturarak çakışmayı önleyelim
+    let uniqueId = "Ex" + Date.now(); 
+    let key = `${wId}_${mVal}-${uniqueId}`;
+    
+    data.logs[key] = 0; // Boş kayıt oluştur
+    saveData(); // Tabloyu yenileyecek
+}
+
+// --- 4. İHALE SİSTEMİ ---
+let currentCalc = null; // Kaydetmeden önceki geçici hafıza
+
+function renderTenderWorkers() {
+    document.getElementById('tenderWorkerList').innerHTML = data.workers.map(w => `
+        <div class="form-check">
+            <input class="form-check-input t-check" type="checkbox" value="${w.id}" id="tc_${w.id}">
+            <label class="form-check-label d-flex justify-content-between small" for="tc_${w.id}">
+                <span>${w.name}</span>
+                <span class="text-muted">Kâr: ${w.gross - w.net} TL</span>
+            </label>
+        </div>
+    `).join('');
+}
+
+function calculateTender() {
+    let days = parseFloat(document.getElementById('tDays').value);
+    let name = document.getElementById('tName').value || "İsimsiz İhale";
+    
+    if(!days) return alert("Gün sayısı giriniz.");
+    let checks = document.querySelectorAll('.t-check:checked');
+    if(checks.length === 0) return alert("En az bir işçi seçiniz.");
+
+    let totalCost = 0;   // Gider (İşçi Netleri)
+    let totalIncome = 0; // Gelir (Müşteri Brütleri)
+
+    checks.forEach(chk => {
+        let w = data.workers.find(x => x.id == chk.value);
+        totalCost += w.net * days;
+        totalIncome += w.gross * days;
+    });
+
+    let profit = totalIncome - totalCost;
+
+    // Ekrana Yaz
+    document.getElementById('resCost').innerText = totalCost.toLocaleString() + " TL";
+    document.getElementById('resIncome').innerText = totalIncome.toLocaleString() + " TL";
+    document.getElementById('resProfit').innerText = profit.toLocaleString() + " TL";
+    
+    document.getElementById('tenderResult').classList.remove('d-none');
+
+    // Geçici hafızaya al
+    currentCalc = {
+        id: Date.now(),
+        name: name,
+        totalCost: totalCost,
+        totalIncome: totalIncome,
+        profit: profit,
+        date: new Date().toLocaleDateString()
+    };
+}
+
+function saveTender() {
+    if(!currentCalc) return;
+    
+    data.tenders.push(currentCalc);
+    saveData(); // Dashboard güncellenir
+    
+    // Formu Temizle
+    document.getElementById('tName').value = "";
+    document.getElementById('tDays').value = "";
+    document.getElementById('tenderResult').classList.add('d-none');
+    document.querySelectorAll('.t-check').forEach(c => c.checked = false);
+    
+    currentCalc = null;
+    alert("İhale kaydedildi ve genel duruma işlendi.");
+}
+
+function renderSavedTenders() {
+    let list = document.getElementById('savedTendersList');
+    if(data.tenders.length === 0) {
+        list.innerHTML = '<div class="text-center text-muted small p-2">Henüz kayıtlı ihale yok.</div>';
+        return;
+    }
+
+    list.innerHTML = data.tenders.slice().reverse().map(t => `
+        <div class="card p-2 mb-2 tender-item position-relative">
+            <div class="d-flex justify-content-between align-items-center">
+                <strong>${t.name}</strong>
+                <button class="btn btn-sm btn-link text-danger p-0" onclick="deleteTender(${t.id})">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+            <div class="d-flex justify-content-between mt-1 text-muted small">
+                <span>Maliyet: ${t.totalCost.toLocaleString()}</span>
+                <span>Gelir: ${t.totalIncome.toLocaleString()}</span>
+            </div>
+            <div class="mt-1 text-end">
+                <span class="badge bg-warning text-dark">Kâr: ${t.profit.toLocaleString()} TL</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+function deleteTender(id) {
+    if(confirm("Bu ihaleyi ve kazanç kaydını silmek istiyor musunuz?")) {
+        data.tenders = data.tenders.filter(t => t.id !== id);
+        saveData();
+    }
+}
+
+// Uygulamayı Başlat
+loadData();
+</script>
+</body>
+</html>
