@@ -1,0 +1,270 @@
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Batuhan Tatlı Hesaplayıcı</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<style>
+body{
+font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial;
+margin:0;
+background:linear-gradient(135deg,#8ef0b3,#c9ffd9);
+min-height:100vh;
+}
+
+header{
+background:#27ae60;
+color:white;
+text-align:center;
+padding:20px;
+font-size:22px;
+font-weight:700;
+box-shadow:0 4px 15px rgba(0,0,0,0.2);
+}
+
+header small{
+display:block;
+font-size:13px;
+opacity:.9;
+}
+
+.container{
+padding:20px;
+max-width:520px;
+margin:auto;
+}
+
+button{
+width:100%;
+padding:14px;
+margin-top:12px;
+border:none;
+border-radius:30px;
+background:linear-gradient(135deg,#2ecc71,#1abc9c);
+color:white;
+font-size:16px;
+font-weight:600;
+cursor:pointer;
+transition:.25s;
+box-shadow:0 6px 15px rgba(0,0,0,.15);
+}
+
+button:hover{
+transform:translateY(-2px) scale(1.03);
+}
+
+input,select{
+width:100%;
+padding:12px;
+margin-top:10px;
+border-radius:14px;
+border:1px solid #ddd;
+font-size:15px;
+}
+
+.result{
+background:white;
+padding:16px;
+margin-top:15px;
+border-radius:18px;
+text-align:center;
+font-weight:600;
+box-shadow:0 8px 20px rgba(0,0,0,0.15);
+}
+
+.page{display:none}
+.homeBtn{background:#555}
+
+svg{
+margin-top:15px;
+width:100%;
+height:220px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+Batuhan Tatlı Hesaplayıcı
+<small>BEM.ltd</small>
+</header>
+
+<div class="container">
+
+<div id="home" class="page">
+<button onclick="openPage('triangle')">Üçgen Hesaplama</button>
+<button onclick="openPage('rectangle')">Dikdörtgen Kenar</button>
+<button onclick="openPage('angle')">Eğim Açısı</button>
+<button onclick="openPage('welding')">Kaynak Elektrot & Amper</button>
+<button onclick="openPage('profile')">Profil KG Hesaplama</button>
+</div>
+
+<div id="triangle" class="page">
+<button class="homeBtn" onclick="openPage('home')">Ana Sayfa</button>
+<h3>Üçgen Kenar Hesaplama</h3>
+
+<input id="sideA" placeholder="a kenarı">
+<input id="sideB" placeholder="b kenarı">
+<input id="sideC" placeholder="c kenarı (hipotenüs)">
+
+<button onclick="calcTriangle()">Hesapla</button>
+
+<div class="result" id="triResult"></div>
+
+<svg viewBox="0 0 300 200">
+<line x1="40" y1="170" x2="240" y2="170" stroke="black" stroke-width="3"/>
+<line x1="40" y1="170" x2="40" y2="40" stroke="black" stroke-width="3"/>
+<line x1="40" y1="40" x2="240" y2="170" stroke="black" stroke-width="3"/>
+<text id="labelA" x="140" y="185">a</text>
+<text id="labelB" x="10" y="110">b</text>
+<text id="labelC" x="150" y="90">c</text>
+</svg>
+
+</div>
+
+<div id="rectangle" class="page">
+<button class="homeBtn" onclick="openPage('home')">Ana Sayfa</button>
+<h3>Dikdörtgen Bilinmeyen Kenar</h3>
+
+<input id="rectArea" placeholder="Alan">
+<input id="rectSide" placeholder="Bilinen Kenar">
+
+<button onclick="calcRectangle()">Hesapla</button>
+
+<div class="result" id="rectResult"></div>
+</div>
+
+<div id="angle" class="page">
+<button class="homeBtn" onclick="openPage('home')">Ana Sayfa</button>
+<h3>Eğim Açısı</h3>
+
+<input id="rise" placeholder="Yükseklik">
+<input id="run" placeholder="Uzunluk">
+
+<button onclick="calcAngle()">Hesapla</button>
+
+<div class="result" id="angleResult"></div>
+</div>
+
+<div id="welding" class="page">
+<button class="homeBtn" onclick="openPage('home')">Ana Sayfa</button>
+<h3>Kaynak Ayar Hesaplama</h3>
+
+<input id="thickness" placeholder="Malzeme kalınlığı (mm)">
+
+<select id="material">
+<option value="steel">Çelik</option>
+<option value="aluminum">Alüminyum</option>
+</select>
+
+<button onclick="calcWeld()">Öneri Hesapla</button>
+
+<div class="result" id="weldResult"></div>
+</div>
+
+<div id="profile" class="page">
+<button class="homeBtn" onclick="openPage('home')">Ana Sayfa</button>
+<h3>Profil KG Hesaplama</h3>
+
+<input id="width" placeholder="Profil genişlik (mm)">
+<input id="height" placeholder="Profil yükseklik (mm)">
+<input id="thick" placeholder="Et kalınlığı (mm)">
+<input id="length" placeholder="Uzunluk (metre)">
+
+<button onclick="calcProfile()">KG Hesapla</button>
+
+<div class="result" id="profileResult"></div>
+
+</div>
+
+</div>
+
+<script>
+
+function openPage(id){
+document.querySelectorAll(".page").forEach(p=>p.style.display="none");
+document.getElementById(id).style.display="block";
+}
+
+openPage("home");
+
+function calcTriangle(){
+
+let a=parseFloat(document.getElementById("sideA").value);
+let b=parseFloat(document.getElementById("sideB").value);
+let c=parseFloat(document.getElementById("sideC").value);
+
+if(!a && b && c){ a=Math.sqrt(c*c - b*b); }
+if(!b && a && c){ b=Math.sqrt(c*c - a*a); }
+if(!c && a && b){ c=Math.sqrt(a*a + b*b); }
+
+document.getElementById("triResult").innerHTML="a="+a.toFixed(2)+" , b="+b.toFixed(2)+" , c="+c.toFixed(2);
+
+document.getElementById("labelA").textContent="a="+a.toFixed(1);
+document.getElementById("labelB").textContent="b="+b.toFixed(1);
+document.getElementById("labelC").textContent="c="+c.toFixed(1);
+}
+
+function calcRectangle(){
+
+let area=parseFloat(document.getElementById("rectArea").value);
+let side=parseFloat(document.getElementById("rectSide").value);
+let result=area/side;
+
+document.getElementById("rectResult").innerHTML="Bilinmeyen kenar: "+result.toFixed(2);
+}
+
+function calcAngle(){
+
+let rise=parseFloat(document.getElementById("rise").value);
+let run=parseFloat(document.getElementById("run").value);
+
+let angle=Math.atan(rise/run)*(180/Math.PI);
+
+document.getElementById("angleResult").innerHTML="Açı: "+angle.toFixed(2)+"°";
+}
+
+function calcWeld(){
+
+let t=parseFloat(document.getElementById("thickness").value);
+let material=document.getElementById("material").value;
+
+let electrode="";
+let amp="";
+
+if(material==="aluminum"){
+electrode="TIG/MIG ER4043 tel";
+amp=(t*40).toFixed(0)+" A yaklaşık";
+}else{
+
+if(t<=2){electrode="1.6 mm"; amp="40-60 A";}
+else if(t<=4){electrode="2.5 mm"; amp="70-100 A";}
+else if(t<=8){electrode="3.2 mm"; amp="100-140 A";}
+else{electrode="4.0 mm"; amp="140-180 A";}
+
+}
+
+document.getElementById("weldResult").innerHTML="Elektrot: "+electrode+"<br>Önerilen Amper: "+amp;
+}
+
+function calcProfile(){
+
+let w=parseFloat(document.getElementById("width").value);
+let h=parseFloat(document.getElementById("height").value);
+let t=parseFloat(document.getElementById("thick").value);
+let L=parseFloat(document.getElementById("length").value);
+
+let area=((w*h) - ((w-2*t)*(h-2*t)));
+
+let kg = area * 0.00785 * L;
+
+document.getElementById("profileResult").innerHTML="Ağırlık: "+kg.toFixed(2)+" kg";
+}
+
+</script>
+
+</body>
+</html>
