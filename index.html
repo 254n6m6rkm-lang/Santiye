@@ -16,12 +16,28 @@
         margin: 0;
     }
     .box {
+        position: relative;
         background: #1e1e1e;
-        padding: 25px;
+        padding: 30px 25px 25px 25px;
         border-radius: 15px;
         width: 320px;
         text-align: center;
         box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+    .guide {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        text-align: right;
+    }
+    .guide-title {
+        font-size: 12px;
+        color: #aaa;
+    }
+    .guide-name {
+        font-size: 16px;
+        font-weight: bold;
+        color: #00c853;
     }
     input {
         width: 100%;
@@ -55,16 +71,27 @@
         font-size: 14px;
         color: #aaa;
     }
+    .footer {
+        margin-top: 15px;
+        font-size: 12px;
+        color: #666;
+    }
 </style>
 </head>
 <body>
 
 <div class="box">
+    <div class="guide">
+        <div class="guide-title">Tur Rehberi</div>
+        <div class="guide-name">Bartu Coşkun Kara</div>
+    </div>
+
     <h2>Mart 2026 Bali Turu</h2>
     <input type="text" id="rupi" placeholder="Rupi gir">
     <button onclick="hesapla()">Hesapla</button>
     <div class="result" id="sonuc">Sonuç: -</div>
     <div class="note" id="not"></div>
+    <div class="footer">Yapımcı: Batuhan Tatlı</div>
 </div>
 
 <script>
