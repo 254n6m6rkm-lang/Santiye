@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Personel Karlılık / Zarar Analizi</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{background:linear-gradient(135deg,#0f172a,#1e293b);min-height:100vh;padding:30px;color:#fff}
+.wrapper{max-width:1100px;margin:auto;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:35px;backdrop-filter:blur(12px)}
+h1{font-size:32px;margin-bottom:10px}.desc{color:#cbd5e1;line-height:1.6;margin-bottom:28px}
+.grid{display:grid;grid-template-columns:1fr 1fr 220px;gap:15px;margin-bottom:28px}
+input{padding:16px;border:none;border-radius:14px;font-size:22px;font-weight:bold}
+button{border:none;border-radius:14px;font-size:18px;font-weight:bold;background:#22c55e;color:#fff}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:15px;margin-bottom:28px}
+.card{background:rgba(255,255,255,.07);border-radius:18px;padding:20px}
+.label{color:#cbd5e1;font-size:14px;margin-bottom:10px}.value{font-size:30px;font-weight:bold}
+.green{color:#4ade80}.red{color:#f87171}.yellow{color:#facc15}.blue{color:#38bdf8}
+.table{border-radius:18px;overflow:hidden;border:1px solid rgba(255,255,255,.08)}
+.row{display:grid;grid-template-columns:2fr 1fr;padding:16px 18px;border-bottom:1px solid rgba(255,255,255,.06)}
+.row:last-child{border-bottom:none}.header{background:rgba(255,255,255,.08);font-weight:bold}
+@media(max-width:850px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrapper">
+<h1>Personel Karlılık / Zarar Hesaplama</h1>
+<div class="desc">Asıl işverenden aldığınız günlük ücreti ve işçiye vereceğiniz günlük ücreti yazın. Sistem gerçek kârı veya zararı hesaplar.</div>
+<div class="grid">
+<input type="number" id="gelir" value="5237">
+<input type="number" id="isciodeme" value="3287">
+<button onclick="hesapla()">HESAPLA</button>
+</div>
+
+<div class="cards">
+<div class="card"><div class="label">Asıl İşverenden Gelen Ücret</div><div class="value blue" id="brut"></div></div>
+<div class="card"><div class="label">İşçiye Verilecek Rakam</div><div class="value yellow" id="isci"></div></div>
+<div class="card"><div class="label">Diğer Giderler</div><div class="value" id="gider"></div></div>
+<div class="card"><div class="label">Sonuç (Kâr / Zarar)</div><div class="value" id="sonuc"></div></div>
+</div>
+
+<div class="table">
+<div class="row header"><div>Detay</div><div>Tutar</div></div>
+<div class="row"><div>Sigorta + İhtiyat</div><div id="d1"></div></div>
+<div class="row"><div>Yıllık İzin Karşılığı</div><div id="d2"></div></div>
+<div class="row"><div>Check-up + Kıyafet</div><div id="d3"></div></div>
+<div class="row"><div>İşçiye Ödeme</div><div id="d4"></div></div>
+<div class="row"><div>Toplam Çıkış</div><div id="d5"></div></div>
+<div class="row"><div>Asıl İşverenden Gelen</div><div id="d6"></div></div>
+</div>
+</div>
+
+<script>
+function tl(x){return x.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})+" TL";}
+function hesapla(){
+let gelir=parseFloat(document.getElementById("gelir").value)||0;
+let isci=parseFloat(document.getElementById("isciodeme").value)||0;
+let sigorta=((gelir*30)*0.222)/22;
+let izin=(gelir*14)/264;
+let yanhak=25000/264;
+let diger=sigorta+izin+yanhak;
+let toplam=isci+diger;
+let fark=gelir-toplam;
+document.getElementById("brut").innerText=tl(gelir);
+document.getElementById("isci").innerText=tl(isci);
+document.getElementById("gider").innerText=tl(diger);
+let sonuc=document.getElementById("sonuc");
+if(fark>=0){sonuc.innerText="KÂR: "+tl(fark);sonuc.className="value green";}
+else{sonuc.innerText="ZARAR: "+tl(Math.abs(fark));sonuc.className="value red";}
+document.getElementById("d1").innerText=tl(sigorta);
+document.getElementById("d2").innerText=tl(izin);
+document.getElementById("d3").innerText=tl(yanhak);
+document.getElementById("d4").innerText=tl(isci);
+document.getElementById("d5").innerText=tl(toplam);
+document.getElementById("d6").innerText=tl(gelir);
+}
+hesapla();
+</script>
+</body>
+</html>
