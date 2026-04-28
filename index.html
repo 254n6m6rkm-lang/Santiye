@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang='tr'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1'>
+<title>Personel Karlılık Nihai</title>
+<style>
+body{font-family:Arial;background:#0f172a;color:#fff;padding:30px} .wrap{max-width:1200px;margin:auto;background:#1e293b;padding:30px;border-radius:20px}
+.grid,.cards{display:grid;gap:14px}.grid{grid-template-columns:1fr 1fr 220px}.cards{grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-top:20px}
+input,button{padding:14px;border-radius:12px;border:none;font-size:20px} button{background:#22c55e;color:#fff}
+.card{background:#334155;padding:18px;border-radius:16px}.label{font-size:14px;color:#cbd5e1}.value{font-size:28px;font-weight:bold}
+table{width:100%;margin-top:25px;border-collapse:collapse} td,th{padding:12px;border-bottom:1px solid #475569;text-align:left}
+</style></head>
+<body><div class='wrap'>
+<h1>Personel Karlılık / Zarar Yönetim Paneli</h1>
+<div class='grid'>
+<input id='gelir' type='number' value='5237'>
+<input id='isci' type='number' value='3287'>
+<button onclick='hesapla()'>HESAPLA</button>
+</div>
+<div class='cards'>
+<div class='card'><div class='label'>Asıl İşverenden Gelen</div><div class='value' id='c1'></div></div>
+<div class='card'><div class='label'>Kasamda Kalan Para (%20)</div><div class='value' id='c2'></div></div>
+<div class='card'><div class='label'>Kesintiler Sonrası Kalan</div><div class='value' id='c3'></div></div>
+<div class='card'><div class='label'>İşçiye Ödenecek</div><div class='value' id='c4'></div></div>
+<div class='card'><div class='label'>Kasadan Ekstra Çıkan</div><div class='value' id='c5'></div></div>
+<div class='card'><div class='label'>Gerçek Net Sonuç</div><div class='value' id='c6'></div></div>
+</div>
+<table>
+<tr><th>Kesinti Kalemi</th><th>Tutar</th></tr>
+<tr><td>%20 Kâr Payı</td><td id='d1'></td></tr>
+<tr><td>%22.20 Sigorta + İhtiyat</td><td id='d2'></td></tr>
+<tr><td>14 Günlük Yıllık İzin</td><td id='d3'></td></tr>
+<tr><td>Check-up + Kıyafet</td><td id='d4'></td></tr>
+<tr><td>Toplam Kesinti</td><td id='d5'></td></tr>
+</table>
+</div>
+<script>
+function tl(x){return x.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})+' TL';}
+function hesapla(){
+let gelir=parseFloat(document.getElementById('gelir').value)||0;
+let isci=parseFloat(document.getElementById('isci').value)||0;
+let kar=gelir*0.20;
+let sigorta=((gelir*30)*0.222)/22;
+let izin=(gelir*14)/264;
+let yanhak=25000/264;
+let toplam=kar+sigorta+izin+yanhak;
+let kalan=gelir-toplam;
+let ekstra=Math.max(0,isci-kalan);
+let net=kar-ekstra;
+document.getElementById('c1').innerText=tl(gelir);
+document.getElementById('c2').innerText=tl(kar);
+document.getElementById('c3').innerText=tl(kalan);
+document.getElementById('c4').innerText=tl(isci);
+document.getElementById('c5').innerText=tl(ekstra);
+document.getElementById('c6').innerText=(net>=0?'KÂR: ':'ZARAR: ')+tl(Math.abs(net));
+document.getElementById('d1').innerText=tl(kar);
+document.getElementById('d2').innerText=tl(sigorta);
+document.getElementById('d3').innerText=tl(izin);
+document.getElementById('d4').innerText=tl(yanhak);
+document.getElementById('d5').innerText=tl(toplam);
+}
+hesapla();
+</script></body></html>
